@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mick & Minn - 3D Adventure</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; overflow: hidden; font-family: 'Arial', sans-serif; }
+    #canvas { display: block; }
+    #ui {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px; height: 20px;
+    }
+    #crosshair::before, #crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.8);
+    }
+    #crosshair::before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
+    #crosshair::after  { width: 100%; height: 2px; top: 50%; left: 0; transform: translateY(-50%); }
+    #dialog {
+      position: absolute;
+      bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      border: 2px solid #ffd700;
+      border-radius: 12px;
+      padding: 16px 24px;
+      color: #fff;
+      font-size: 16px;
+      max-width: 480px;
+      text-align: center;
+      display: none;
+    }
+    #dialog .speaker {
+      color: #ffd700;
+      font-weight: bold;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    #hint {
+      position: absolute;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.6);
+      font-size: 13px;
+    }
+    #controls-hint {
+      position: absolute;
+      top: 16px; left: 16px;
+      color: rgba(255,255,255,0.5);
+      font-size: 12px;
+      line-height: 1.8;
+    }
+    #interact-prompt {
+      position: absolute;
+      top: 55%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,215,0,0.15);
+      border: 1px solid #ffd700;
+      border-radius: 8px;
+      padding: 6px 16px;
+      color: #ffd700;
+      font-size: 14px;
+      display: none;
+    }
+    #start-screen {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      pointer-events: all;
+      z-index: 20;
+    }
+    #start-screen h1 {
+      font-size: 48px;
+      color: #ffd700;
+      margin-bottom: 12px;
+      text-shadow: 0 0 20px #ffd700;
+    }
+    #start-screen p {
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+    #start-btn {
+      margin-top: 32px;
+      padding: 14px 40px;
+      font-size: 18px;
+      background: #ffd700;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      pointer-events: all;
+    }
+    #start-btn:hover { background: #ffe84d; }
+    #score {
+      position: absolute;
+      top: 16px; right: 16px;
+      color: #ffd700;
+      font-size: 14px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div id="ui">
+  <div id="crosshair"></div>
+  <div id="dialog">
+    <div class="speaker" id="dialog-speaker"></div>
+    <div id="dialog-text"></div>
+  </div>
+  <div id="interact-prompt">[ E ] 話しかける</div>
+  <div id="hint">WASD / 矢印キー で移動　マウスで視点</div>
+  <div id="controls-hint">
+    WASD：移動<br>
+    マウス：視点<br>
+    E：話しかける
+  </div>
+  <div id="score">交流した仲間: <span id="score-count">0</span></div>
+</div>
+<div id="start-screen">
+  <h1>🐭 Mick & Minn</h1>
+  <p>黒いネズミのミックが動物たちと交流する3Dアドベンチャー</p>
+  <p style="color:rgba(255,255,255,0.45); font-size:13px; margin-top:8px;">WASD で移動、マウスで視点操作</p>
+  <button id="start-btn" onclick="startGame()">ゲームスタート</button>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
