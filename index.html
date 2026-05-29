@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>UPRISING</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body {
+    background: #000;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #wrap {
+    position: relative;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+  /* GBA-style bezel */
+  #wrap::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 3px solid #1a2535;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 10;
+    box-shadow: 0 0 30px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+  }
+  /* Mobile controls */
+  #mobile-ui {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    display: none;
+    z-index: 20;
+  }
+  .dpad {
+    position: absolute;
+    bottom: 24px; left: 24px;
+    width: 120px; height: 120px;
+    pointer-events: all;
+  }
+  .dpad-btn {
+    position: absolute;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  #btn-up    { top:0;   left:42px; }
+  #btn-down  { bottom:0; left:42px; }
+  #btn-left  { top:42px; left:0; }
+  #btn-right { top:42px; right:0; }
+  .action-btns {
+    position: absolute;
+    bottom: 30px; right: 24px;
+    display: flex; gap: 12px;
+    pointer-events: all;
+  }
+  .abtn {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.55);
+    font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    flex-direction: column;
+    gap: 2px;
+  }
+  #abtn-action { border-color: rgba(192,40,28,0.6); color: rgba(192,40,28,0.8); }
+  #abtn-bomb   { border-color: rgba(232,165,32,0.6); color: rgba(232,165,32,0.8); }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+</div>
+<div id="mobile-ui">
+  <div class="dpad">
+    <div class="dpad-btn" id="btn-up">▲</div>
+    <div class="dpad-btn" id="btn-down">▼</div>
+    <div class="dpad-btn" id="btn-left">◀</div>
+    <div class="dpad-btn" id="btn-right">▶</div>
+  </div>
+  <div class="action-btns">
+    <div class="abtn" id="abtn-action"><span>Z</span><span style="font-size:9px">攻撃</span></div>
+    <div class="abtn" id="abtn-bomb"><span>X</span><span style="font-size:9px">爆弾</span></div>
+  </div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
