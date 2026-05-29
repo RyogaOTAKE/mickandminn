@@ -49,17 +49,22 @@ const animalDialogs = {
 
 function startGame() {
   document.getElementById('start-screen').style.display = 'none';
-  init();
-  animate();
-  if (isMobile) {
-    setupTouch();
-  } else {
-    setupPointerLock();
+  try {
+    init();
+    animate();
+    if (isMobile) {
+      setupTouch();
+    } else {
+      setupPointerLock();
+    }
+  } catch(e) {
+    console.error('Game init error:', e);
   }
 }
 
 function detectDevice() {
-  isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
+    || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   if (isMobile) {
     const desc = document.getElementById('control-desc');
     if (desc) desc.textContent = '左：移動ジョイスティック　右：視点ドラッグ';
@@ -341,7 +346,7 @@ function buildPlayer() {
   const eyeMat    = new THREE.MeshLambertMaterial({ color: 0xff0000 });
 
   // Body
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.45, 8, 12), blackMat);
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.5, 12), blackMat);
   body.position.y = 0.6;
   body.castShadow = true;
   player.add(body);
@@ -382,7 +387,7 @@ function buildPlayer() {
 
   // Arms
   [-0.32, 0.32].forEach((x, i) => {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.3, 6, 8), blackMat);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.44, 8), blackMat);
     arm.position.set(x, 0.7, 0);
     arm.rotation.z = (i === 0 ? 1 : -1) * 0.4;
     arm.castShadow = true;
@@ -391,7 +396,7 @@ function buildPlayer() {
 
   // Legs
   [-0.1, 0.1].forEach(x => {
-    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.3, 6, 8), blackMat);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.46, 8), blackMat);
     leg.position.set(x, 0.25, 0);
     leg.castShadow = true;
     player.add(leg);
