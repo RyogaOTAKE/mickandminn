@@ -12,17 +12,26 @@ const ctx    = canvas.getContext('2d');
 canvas.width  = CW;
 canvas.height = CH;
 
-// Scale canvas to fit screen while preserving aspect ratio
+const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0
+  || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+// Scale canvas to fit; on mobile, reserve bottom 160px for controls
 function resize() {
+  const ctrlH  = isMobile ? 160 : 0;
   const scaleX = window.innerWidth  / CW;
-  const scaleY = window.innerHeight / CH;
-  const scale  = Math.min(scaleX, scaleY) * 0.95;
+  const scaleY = (window.innerHeight - ctrlH) / CH;
+  const scale  = Math.min(scaleX, scaleY) * 0.97;
   const w = Math.floor(CW * scale);
   const h = Math.floor(CH * scale);
   canvas.style.width  = w + 'px';
   canvas.style.height = h + 'px';
-  document.getElementById('wrap').style.width  = w + 'px';
-  document.getElementById('wrap').style.height = h + 'px';
+  const wrap = document.getElementById('wrap');
+  wrap.style.width  = w + 'px';
+  wrap.style.height = h + 'px';
+  if (isMobile) {
+    document.body.style.alignItems  = 'flex-start';
+    document.body.style.paddingTop  = '4px';
+  }
 }
 window.addEventListener('resize', resize);
 resize();
@@ -253,22 +262,80 @@ function anyKey() {
 
 // ── Mobile input ──────────────────────────────────────────────────
 function setupMobile() {
-  if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
-  const ui = document.getElementById('mobile-ui');
-  ui.style.display = 'block';
+  if (!isMobile) return;
 
-  function hold(id, code) {
-    const el = document.getElementById(id);
-    el.addEventListener('touchstart', e => { e.preventDefault(); keys[code] = true; justDown[code] = true; }, { passive:false });
-    el.addEventListener('touchend',   e => { e.preventDefault(); keys[code] = false; }, { passive:false });
-    el.addEventListener('touchcancel',e => { keys[code] = false; }, { passive:false });
+  document.getElementById('mobile-ui').style.display = 'flex';
+  document.getElementById('tap-hint').style.display  = 'block';
+
+  // ── Canvas tap → advance menu / story screens ──────────────────
+  canvas.addEventListener('touchstart', e => {
+    if (screen !== 'play') {
+      e.preventDefault();
+      justDown['KeyZ'] = true;
+    }
+  }, { passive: false });
+
+  // ── D-pad zone (full-circle, 8-way) ───────────────────────────
+  const dpad = document.getElementById('dpad-zone');
+  let dpadId = null;
+  const DEAD = 22;   // dead-zone radius in px
+  const DIAG = 0.38; // cos threshold for diagonal
+
+  function applyDpad(touch) {
+    const r  = dpad.getBoundingClientRect();
+    const dx = touch.clientX - (r.left + r.width  / 2);
+    const dy = touch.clientY - (r.top  + r.height / 2);
+    const len = Math.sqrt(dx*dx + dy*dy);
+    keys['ArrowLeft'] = keys['ArrowRight'] = keys['ArrowUp'] = keys['ArrowDown'] = false;
+    if (len < DEAD) return;
+    const nx = dx / len, ny = dy / len;
+    if (nx >  DIAG) keys['ArrowRight'] = true;
+    if (nx < -DIAG) keys['ArrowLeft']  = true;
+    if (ny >  DIAG) keys['ArrowDown']  = true;
+    if (ny < -DIAG) keys['ArrowUp']    = true;
   }
-  hold('btn-up',    'ArrowUp');
-  hold('btn-down',  'ArrowDown');
-  hold('btn-left',  'ArrowLeft');
-  hold('btn-right', 'ArrowRight');
-  hold('abtn-action', 'KeyZ');
-  hold('abtn-bomb',   'KeyX');
+  function clearDpad() {
+    keys['ArrowLeft'] = keys['ArrowRight'] = keys['ArrowUp'] = keys['ArrowDown'] = false;
+  }
+
+  dpad.addEventListener('touchstart', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (dpadId === null) { dpadId = t.identifier; applyDpad(t); }
+    }
+  }, { passive: false });
+  dpad.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === dpadId) applyDpad(t);
+    }
+  }, { passive: false });
+  dpad.addEventListener('touchend', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === dpadId) { dpadId = null; clearDpad(); }
+    }
+  }, { passive: false });
+  dpad.addEventListener('touchcancel', () => { dpadId = null; clearDpad(); });
+
+  // ── Action buttons (multi-touch safe) ─────────────────────────
+  function holdBtn(id, code) {
+    const el = document.getElementById(id);
+    let tid = null;
+    el.addEventListener('touchstart', e => {
+      e.preventDefault(); e.stopPropagation();
+      for (const t of e.changedTouches) {
+        if (tid === null) { tid = t.identifier; keys[code] = true; justDown[code] = true; }
+      }
+    }, { passive: false });
+    el.addEventListener('touchend', e => {
+      for (const t of e.changedTouches) {
+        if (t.identifier === tid) { tid = null; keys[code] = false; }
+      }
+    }, { passive: false });
+    el.addEventListener('touchcancel', () => { tid = null; keys[code] = false; });
+  }
+  holdBtn('abtn-action', 'KeyZ');
+  holdBtn('abtn-bomb',   'KeyX');
 }
 setupMobile();
 
@@ -939,7 +1006,10 @@ function drawTitle() {
 
   ctx.fillStyle = C.gy;
   ctx.font = '8px monospace';
-  ctx.fillText('ARROW KEYS: MOVE   Z: ATTACK   X: BOMB', CW/2, 158);
+  const ctrlTxt = isMobile
+    ? 'Dパッド:移動  攻撃Z:なぐる  爆弾X:爆破'
+    : 'ARROW KEYS: MOVE   Z: ATTACK   X: BOMB';
+  ctx.fillText(ctrlTxt, CW/2, 158);
 
   if (blink) {
     ctx.fillStyle = C.wh;
