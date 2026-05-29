@@ -118,6 +118,70 @@
       font-size: 14px;
       text-align: right;
     }
+
+    /* ── Mobile controls ── */
+    #joystick-zone {
+      position: fixed;
+      bottom: 24px; left: 24px;
+      width: 130px; height: 130px;
+      z-index: 15;
+      display: none;
+      pointer-events: all;
+    }
+    #joystick-base {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.28);
+    }
+    #joystick-knob {
+      position: absolute;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      border: 2px solid rgba(255,255,255,0.6);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: transform 0.05s;
+    }
+    #interact-btn {
+      position: fixed;
+      bottom: 40px; right: 28px;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(255,215,0,0.12);
+      border: 2px solid rgba(255,215,0,0.35);
+      color: rgba(255,215,0,0.4);
+      font-size: 12px;
+      font-weight: bold;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 15;
+      pointer-events: all;
+      user-select: none;
+      -webkit-user-select: none;
+      line-height: 1.3;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    #interact-btn.active {
+      background: rgba(255,215,0,0.25);
+      border-color: #ffd700;
+      color: #ffd700;
+    }
+    #look-hint {
+      position: fixed;
+      bottom: 30px;
+      left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.35);
+      font-size: 11px;
+      display: none;
+      pointer-events: none;
+      z-index: 15;
+    }
   </style>
 </head>
 <body>
@@ -137,10 +201,16 @@
   </div>
   <div id="score">交流した仲間: <span id="score-count">0</span></div>
 </div>
+<div id="joystick-zone">
+  <div id="joystick-base"></div>
+  <div id="joystick-knob"></div>
+</div>
+<div id="interact-btn">話す</div>
+<div id="look-hint">右側ドラッグ：視点</div>
 <div id="start-screen">
   <h1>🐭 Mick & Minn</h1>
   <p>黒いネズミのミックが動物たちと交流する3Dアドベンチャー</p>
-  <p style="color:rgba(255,255,255,0.45); font-size:13px; margin-top:8px;">WASD で移動、マウスで視点操作</p>
+  <p id="control-desc" style="color:rgba(255,255,255,0.45); font-size:13px; margin-top:8px;">WASD で移動、マウスで視点操作</p>
   <button id="start-btn" onclick="startGame()">ゲームスタート</button>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>

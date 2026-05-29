@@ -4,12 +4,16 @@ let scene, camera, renderer, clock;
 let player, playerBody;
 let animals = [];
 let keys = {};
-let mouseX = 0, mouseY = 0;
 let yaw = 0, pitch = 0;
 let isPointerLocked = false;
 let nearbyAnimal = null;
 let metAnimals = new Set();
 let dialogTimeout = null;
+let isMobile = false;
+
+// Touch state
+let joystick = { active: false, id: null, startX: 0, startY: 0, dx: 0, dy: 0 };
+let lookTouch = { active: false, id: null, lastX: 0, lastY: 0 };
 
 const SPEED = 5;
 const INTERACT_DIST = 3.5;
@@ -47,7 +51,19 @@ function startGame() {
   document.getElementById('start-screen').style.display = 'none';
   init();
   animate();
-  setupPointerLock();
+  if (isMobile) {
+    setupTouch();
+  } else {
+    setupPointerLock();
+  }
+}
+
+function detectDevice() {
+  isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if (isMobile) {
+    const desc = document.getElementById('control-desc');
+    if (desc) desc.textContent = '左：移動ジョイスティック　右：視点ドラッグ';
+  }
 }
 
 function init() {
@@ -76,6 +92,94 @@ function init() {
   window.addEventListener('keydown', e => {
     if ((e.code === 'KeyE') && nearbyAnimal) triggerDialog(nearbyAnimal);
   });
+}
+
+// ── Touch Controls ────────────────────────────────────
+function setupTouch() {
+  document.getElementById('joystick-zone').style.display = 'block';
+  document.getElementById('interact-btn').style.display = 'flex';
+  document.getElementById('look-hint').style.display = 'block';
+  document.getElementById('hint').style.display = 'none';
+  document.getElementById('controls-hint').style.display = 'none';
+  document.getElementById('crosshair').style.display = 'none';
+
+  document.addEventListener('touchstart', onTouchStart, { passive: false });
+  document.addEventListener('touchmove',  onTouchMove,  { passive: false });
+  document.addEventListener('touchend',   onTouchEnd,   { passive: false });
+  document.addEventListener('touchcancel',onTouchEnd,   { passive: false });
+
+  document.getElementById('interact-btn').addEventListener('touchstart', e => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (nearbyAnimal) triggerDialog(nearbyAnimal);
+  }, { passive: false });
+}
+
+function joystickCenter() {
+  const z = document.getElementById('joystick-zone');
+  const r = z.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+function isOnJoystick(cx, cy) {
+  const c = joystickCenter();
+  const dx = cx - c.x, dy = cy - c.y;
+  return (dx*dx + dy*dy) < 80 * 80;
+}
+
+function onTouchStart(e) {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    const leftSide = t.clientX < window.innerWidth * 0.5;
+    if (leftSide && !joystick.active) {
+      joystick = { active: true, id: t.identifier, startX: t.clientX, startY: t.clientY, dx: 0, dy: 0 };
+      setKnob(0, 0);
+    } else if (!leftSide && !lookTouch.active) {
+      lookTouch = { active: true, id: t.identifier, lastX: t.clientX, lastY: t.clientY };
+    }
+  }
+}
+
+function onTouchMove(e) {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (joystick.active && t.identifier === joystick.id) {
+      const MAX = 50;
+      let dx = t.clientX - joystick.startX;
+      let dy = t.clientY - joystick.startY;
+      const len = Math.sqrt(dx*dx + dy*dy);
+      if (len > MAX) { dx = dx / len * MAX; dy = dy / len * MAX; }
+      joystick.dx = dx / MAX;
+      joystick.dy = dy / MAX;
+      setKnob(dx, dy);
+    }
+    if (lookTouch.active && t.identifier === lookTouch.id) {
+      const ddx = t.clientX - lookTouch.lastX;
+      const ddy = t.clientY - lookTouch.lastY;
+      yaw   -= ddx * 0.005;
+      pitch -= ddy * 0.005;
+      pitch  = Math.max(-0.9, Math.min(0.8, pitch));
+      lookTouch.lastX = t.clientX;
+      lookTouch.lastY = t.clientY;
+    }
+  }
+}
+
+function onTouchEnd(e) {
+  for (const t of e.changedTouches) {
+    if (joystick.active && t.identifier === joystick.id) {
+      joystick = { active: false, id: null, startX: 0, startY: 0, dx: 0, dy: 0 };
+      setKnob(0, 0);
+    }
+    if (lookTouch.active && t.identifier === lookTouch.id) {
+      lookTouch = { active: false, id: null, lastX: 0, lastY: 0 };
+    }
+  }
+}
+
+function setKnob(dx, dy) {
+  document.getElementById('joystick-knob').style.transform =
+    `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
 }
 
 // ── Lighting ──────────────────────────────────────────
@@ -526,6 +630,12 @@ function updatePlayer(dt) {
   if (keys['KeyA'] || keys['ArrowLeft'])  move.addScaledVector(right,   -1);
   if (keys['KeyD'] || keys['ArrowRight']) move.addScaledVector(right,    1);
 
+  // Virtual joystick
+  if (joystick.active && (Math.abs(joystick.dx) > 0.05 || Math.abs(joystick.dy) > 0.05)) {
+    move.addScaledVector(forward, -joystick.dy);
+    move.addScaledVector(right,    joystick.dx);
+  }
+
   if (move.lengthSq() > 0) {
     move.normalize().multiplyScalar(SPEED * dt);
     player.position.add(move);
@@ -566,7 +676,13 @@ function checkInteract() {
   });
 
   nearbyAnimal = closest;
-  document.getElementById('interact-prompt').style.display = closest ? 'block' : 'none';
+  document.getElementById('interact-prompt').style.display = (!isMobile && closest) ? 'block' : 'none';
+
+  // Mobile interact button
+  const btn = document.getElementById('interact-btn');
+  if (isMobile) {
+    btn.classList.toggle('active', !!closest);
+  }
 }
 
 function onResize() {
@@ -574,3 +690,5 @@ function onResize() {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+detectDevice();
