@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>語源で覚える英単語 — Root Quest</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <h1>🌱 Root Quest</h1>
+        <p class="subtitle">語源（語根）で覚える英単語クイズ</p>
+      </header>
+
+      <!-- スタート画面 -->
+      <section id="screen-home" class="screen">
+        <div class="card intro">
+          <p>
+            共通の<strong>語源（語根）</strong>を持つ英単語をまとめて出題します。<br />
+            それぞれの単語の意味を選んで答えましょう。語根のイメージをつかむと、
+            初めて見る単語も推測できるようになります。
+          </p>
+        </div>
+
+        <div class="stats-bar">
+          <div class="stat">
+            <span class="stat-value" id="stat-played">0</span>
+            <span class="stat-label">プレイ回数</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-best">0%</span>
+            <span class="stat-label">最高正答率</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-mastered">0</span>
+            <span class="stat-label">マスター語根</span>
+          </div>
+        </div>
+
+        <h2 class="section-title">語根を選ぶ</h2>
+        <div id="root-list" class="root-list"></div>
+
+        <button id="btn-random" class="btn btn-primary btn-block">
+          🎲 ランダムに出題スタート
+        </button>
+        <button id="btn-reset" class="btn btn-ghost btn-block">
+          学習記録をリセット
+        </button>
+      </section>
+
+      <!-- クイズ画面 -->
+      <section id="screen-quiz" class="screen hidden">
+        <div class="quiz-top">
+          <button id="btn-quit" class="btn btn-ghost btn-small">← やめる</button>
+          <div class="progress-wrap">
+            <div class="progress-text">
+              <span id="quiz-root-label"></span>
+            </div>
+            <div class="progress-bar">
+              <div id="progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card root-banner">
+          <div class="root-banner-main">
+            <span class="root-chip" id="quiz-root"></span>
+            <span class="root-meaning" id="quiz-root-meaning"></span>
+          </div>
+          <span class="root-origin" id="quiz-root-origin"></span>
+        </div>
+
+        <div class="question-counter">
+          <span id="q-current">1</span> / <span id="q-total">5</span>
+        </div>
+
+        <div class="card question">
+          <div class="question-word" id="question-word"></div>
+          <div class="question-note" id="question-note"></div>
+        </div>
+
+        <div id="choices" class="choices"></div>
+
+        <button id="btn-next" class="btn btn-primary btn-block hidden">
+          次へ →
+        </button>
+      </section>
+
+      <!-- 結果画面 -->
+      <section id="screen-result" class="screen hidden">
+        <div class="card result-card">
+          <div id="result-emoji" class="result-emoji">🎉</div>
+          <h2 id="result-title">結果</h2>
+          <div class="result-score">
+            <span id="result-correct">0</span> / <span id="result-total">5</span>
+            <span class="result-percent" id="result-percent">(0%)</span>
+          </div>
+          <p id="result-message" class="result-message"></p>
+          <div id="result-badge" class="result-badge hidden">⭐ 語根マスター達成！</div>
+        </div>
+
+        <h3 class="section-title">復習</h3>
+        <div id="review-list" class="review-list"></div>
+
+        <button id="btn-retry" class="btn btn-primary btn-block">
+          もう一度（同じ語根）
+        </button>
+        <button id="btn-home" class="btn btn-ghost btn-block">
+          ホームへ戻る
+        </button>
+      </section>
+
+      <footer class="app-footer">
+        記録はこのブラウザのローカルストレージに保存されます。
+      </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
